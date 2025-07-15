@@ -5,33 +5,35 @@ import altair as alt
 def analyze_playlist(sp, playlist_id):
     tracks = []
     results = sp.playlist_tracks(playlist_id)
-    tracks.extend(results['items'])
-    
-    while results['next']:
+    tracks.extend(results["items"])
+
+    while results["next"]:
         results = sp.next(results)
-        tracks.extend(results['items'])
-    
-    audio_features = []
-    track_names = []
+        tracks.extend(results["items"])
 
+    track_data = []
     for item in tracks:
-        track = item['track']
-        if track:  # Avoid NoneType
-            track_id = track['id']
-            features = sp.audio_features(track_id)[0]
-            if features:
-                audio_features.append(features)
-                track_names.append(track['name'])
+        track = item["track"]
+        if track:  # skip nulls
+            audio_features = sp.audio_features(track["id"])[0]
+            if audio_features:
+                track_data.append({
+                    "name": track["name"],
+                    "artist": track["artists"][0]["name"],
+                    "danceability": audio_features["danceability"],
+                    "energy": audio_features["energy"],
+                    "tempo": audio_features["tempo"]
+                })
 
-    df = pd.DataFrame(audio_features)
-    df['name'] = track_names
-    summary = df[['tempo', 'energy', 'danceability', 'valence']].mean().to_frame(name='average').round(2)
+    df = pd.DataFrame(track_data)
+    summary = df.describe().loc[["mean", "std"]]
     
     chart = alt.Chart(df).mark_circle(size=80).encode(
-        x='energy',
-        y='valence',
-        color=alt.value('orange'),
-        tooltip=['name', 'energy', 'valence']
-    ).interactive().properties(title='Valence vs Energy')
+        x="tempo",
+        y="danceability",
+        color="energy",
+        tooltip=["name", "artist"]
+    ).interactive()
 
     return summary, chart
+
