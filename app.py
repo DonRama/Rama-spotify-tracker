@@ -8,7 +8,7 @@ st.set_page_config(page_title="Spotify Playlist Analyzer", layout="wide")
 st.title("🎧 Spotify Playlist Analyzer")
 
 # Authenticate Spotify
-sp = get_spotify_client()
+sp = get_spotify_client(st.secrets)
 
 # Get user playlists
 playlists = sp.current_user_playlists()['items']
