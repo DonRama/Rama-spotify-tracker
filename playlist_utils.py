@@ -1,6 +1,7 @@
 # playlist_utils.py
 import pandas as pd
 import altair as alt
+import streamlit as st
 
 def analyze_playlist(sp, playlist_id):
     tracks = []
@@ -14,26 +15,36 @@ def analyze_playlist(sp, playlist_id):
     track_data = []
     for item in tracks:
         track = item["track"]
-        if track:  # skip nulls
+        if track:
             audio_features = sp.audio_features(track["id"])[0]
             if audio_features:
                 track_data.append({
                     "name": track["name"],
-                    "artist": track["artists"][0]["name"],
+                    "artist": ', '.join([artist["name"] for artist in track["artists"]]),
                     "danceability": audio_features["danceability"],
                     "energy": audio_features["energy"],
-                    "tempo": audio_features["tempo"]
+                    "tempo": audio_features["tempo"],
+                    "valence": audio_features["valence"],
+                    "acousticness": audio_features["acousticness"],
+                    "instrumentalness": audio_features["instrumentalness"],
+                    "popularity": track["popularity"]
                 })
 
     df = pd.DataFrame(track_data)
-    summary = df.describe().loc[["mean", "std"]]
-    
+
+    # Summary statistics
+    summary = df[["danceability", "energy", "tempo", "valence"]].describe().loc[["mean", "std"]]
+
+    # Interactive chart
     chart = alt.Chart(df).mark_circle(size=80).encode(
-        x="tempo",
-        y="danceability",
-        color="energy",
-        tooltip=["name", "artist"]
+        x=alt.X("tempo", title="Tempo"),
+        y=alt.Y("danceability", title="Danceability"),
+        color=alt.Color("energy", scale=alt.Scale(scheme="turbo")),
+        tooltip=["name", "artist", "energy", "tempo", "danceability"]
     ).interactive()
 
-    return summary, chart
+    return df, summary, chart
 
+@st.cache_data(show_spinner=False)
+def get_playlist_data(sp, playlist_url):
+    return sp.playlist_items(playlist_url)

@@ -54,19 +54,29 @@ if selected_name:
     playlist_id = playlist_options[selected_name]
     with st.spinner("Analyzing playlist..."):
         try:
-            df_summary, chart = analyze_playlist(sp, playlist_id)
+            df_tracks, df_summary, chart = analyze_playlist(sp, playlist_id)
 
+            # Display analysis results
             st.subheader("📊 Playlist Summary")
             st.dataframe(df_summary)
 
             st.subheader("🎼 Vibe Visualization")
             st.altair_chart(chart, use_container_width=True)
 
-            # Optional user feedback
-            st.subheader("📝 Rate this playlist:")
-            rating = st.slider("Your Rating", 1, 5, 3)
+            st.subheader("🎵 Track Details")
+            st.dataframe(df_tracks)
+
+            # User rating
+            st.subheader("📝 Rate this Playlist")
+            rating = st.slider("Your Rating (1 = 😐, 5 = 🔥)", 1, 5, 3)
             notes = st.text_area("Your Notes (optional)")
-            st.success("✅ Rating saved (not yet stored — feature coming soon!)")
+
+            if st.button("Submit Rating"):
+                st.success("✅ Rating saved (not yet stored — feature coming soon!)")
+                st.write(f"⭐ Your Rating: {rating}/5")
+                if notes:
+                    st.markdown("🗒️ Your Notes:")
+                    st.markdown(f"> {notes}")
 
         except Exception as e:
             st.error(f"❌ Failed to analyze playlist: {e}")
