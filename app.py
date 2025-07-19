@@ -13,7 +13,7 @@ st.sidebar.header("🔐 Connect to Spotify")
 if "sp" not in st.session_state:
     if st.sidebar.button("Connect to Spotify"):
         with st.spinner("Connecting to Spotify..."):
-            sp = get_spotify_client()
+            sp = get_spotify_client(st.secrets)
             if sp:
                 st.session_state["sp"] = sp
                 st.success("✅ Connected to Spotify!")
